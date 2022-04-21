@@ -22,12 +22,20 @@
  *
  */
 
+#pragma once
+
 #ifndef WEBSOCKETSCLIENT_H_
 #define WEBSOCKETSCLIENT_H_
 
+/*
+#include "TinyGsmClientSIM7600.h"
+typedef TinyGsmSim7600                   TinyGsm;
+typedef TinyGsmSim7600::GsmClientSim7600 TinyGsmClient;
+ */
+
 #include "WebSockets.h"
 
-class WebSocketsClient : protected WebSockets {
+class WebSocketsClient : public WebSockets {
   public:
 #ifdef __AVR__
     typedef void (*WebSocketClientEvent)(WStype_t type, uint8_t * payload, size_t length);
@@ -38,73 +46,73 @@ class WebSocketsClient : protected WebSockets {
     WebSocketsClient(void);
     virtual ~WebSocketsClient(void);
 
-    void begin(const char * host, uint16_t port, const char * url = "/", const char * protocol = "arduino");
-    void begin(String host, uint16_t port, String url = "/", String protocol = "arduino");
-    void begin(IPAddress host, uint16_t port, const char * url = "/", const char * protocol = "arduino");
+    virtual void begin(const char * host, uint16_t port, const char * url = "/", const char * protocol = "arduino");
+    virtual void begin(String host, uint16_t port, String url = "/", String protocol = "arduino");
+    virtual void begin(IPAddress host, uint16_t port, const char * url = "/", const char * protocol = "arduino");
 
 #if defined(HAS_SSL)
 #ifdef SSL_AXTLS
-    void beginSSL(const char * host, uint16_t port, const char * url = "/", const char * fingerprint = "", const char * protocol = "arduino");
-    void beginSSL(String host, uint16_t port, String url = "/", String fingerprint = "", String protocol = "arduino");
+    virtual void beginSSL(const char * host, uint16_t port, const char * url = "/", const char * fingerprint = "", const char * protocol = "arduino");
+    virtual void beginSSL(String host, uint16_t port, String url = "/", String fingerprint = "", String protocol = "arduino");
 #else
-    void beginSSL(const char * host, uint16_t port, const char * url = "/", const uint8_t * fingerprint = NULL, const char * protocol = "arduino");
-    void beginSslWithCA(const char * host, uint16_t port, const char * url = "/", BearSSL::X509List * CA_cert = NULL, const char * protocol = "arduino");
-    void setSSLClientCertKey(BearSSL::X509List * clientCert = NULL, BearSSL::PrivateKey * clientPrivateKey = NULL);
-    void setSSLClientCertKey(const char * clientCert = NULL, const char * clientPrivateKey = NULL);
+    virtual void beginSSL(const char * host, uint16_t port, const char * url = "/", const uint8_t * fingerprint = NULL, const char * protocol = "arduino");
+    virtual void beginSslWithCA(const char * host, uint16_t port, const char * url = "/", BearSSL::X509List * CA_cert = NULL, const char * protocol = "arduino");
+    virtual void setSSLClientCertKey(BearSSL::X509List * clientCert = NULL, BearSSL::PrivateKey * clientPrivateKey = NULL);
+    virtual void setSSLClientCertKey(const char * clientCert = NULL, const char * clientPrivateKey = NULL);
 #endif
-    void beginSslWithCA(const char * host, uint16_t port, const char * url = "/", const char * CA_cert = NULL, const char * protocol = "arduino");
+    virtual void beginSslWithCA(const char * host, uint16_t port, const char * url = "/", const char * CA_cert = NULL, const char * protocol = "arduino");
 #endif
 
-    void beginSocketIO(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
-    void beginSocketIO(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
+    virtual void beginSocketIO(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
+    virtual void beginSocketIO(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
 
 #if defined(HAS_SSL)
-    void beginSocketIOSSL(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
-    void beginSocketIOSSL(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
+    virtual void beginSocketIOSSL(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
+    virtual void beginSocketIOSSL(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
 
-    void beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * CA_cert = NULL, const char * protocol = "arduino");
+    virtual void beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * CA_cert = NULL, const char * protocol = "arduino");
 #if defined(SSL_BARESSL)
-    void beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", BearSSL::X509List * CA_cert = NULL, const char * protocol = "arduino");
+    virtual void beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url = "/socket.io/?EIO=3", BearSSL::X509List * CA_cert = NULL, const char * protocol = "arduino");
 #endif
 #endif
 
 #if(WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC)
-    void loop(void);
+    virtual void loop(void);
 #else
     // Async interface not need a loop call
-    void loop(void) __attribute__((deprecated)) {}
+    virtual void loop(void) __attribute__((deprecated)) {}
 #endif
 
-    void onEvent(WebSocketClientEvent cbEvent);
+    virtual void onEvent(WebSocketClientEvent cbEvent);
 
-    bool sendTXT(uint8_t * payload, size_t length = 0, bool headerToPayload = false);
-    bool sendTXT(const uint8_t * payload, size_t length = 0);
-    bool sendTXT(char * payload, size_t length = 0, bool headerToPayload = false);
-    bool sendTXT(const char * payload, size_t length = 0);
-    bool sendTXT(String & payload);
-    bool sendTXT(char payload);
+    virtual bool sendTXT(uint8_t * payload, size_t length = 0, bool headerToPayload = false);
+    virtual bool sendTXT(const uint8_t * payload, size_t length = 0);
+    virtual bool sendTXT(char * payload, size_t length = 0, bool headerToPayload = false);
+    virtual bool sendTXT(const char * payload, size_t length = 0);
+    virtual bool sendTXT(String & payload);
+    virtual bool sendTXT(char payload);
 
-    bool sendBIN(uint8_t * payload, size_t length, bool headerToPayload = false);
-    bool sendBIN(const uint8_t * payload, size_t length);
+    virtual bool sendBIN(uint8_t * payload, size_t length, bool headerToPayload = false);
+    virtual bool sendBIN(const uint8_t * payload, size_t length);
 
-    bool sendPing(uint8_t * payload = NULL, size_t length = 0);
-    bool sendPing(String & payload);
+    virtual bool sendPing(uint8_t * payload = NULL, size_t length = 0);
+    virtual bool sendPing(String & payload);
 
-    void disconnect(void);
+    virtual void disconnect(void);
 
-    void setAuthorization(const char * user, const char * password);
-    void setAuthorization(const char * auth);
+    virtual void setAuthorization(const char * user, const char * password);
+    virtual void setAuthorization(const char * auth);
 
-    void setExtraHeaders(const char * extraHeaders = NULL);
+    virtual void setExtraHeaders(const char * extraHeaders = NULL);
 
-    void setReconnectInterval(unsigned long time);
+    virtual void setReconnectInterval(unsigned long time);
 
-    void enableHeartbeat(uint32_t pingInterval, uint32_t pongTimeout, uint8_t disconnectTimeoutCount);
-    void disableHeartbeat();
+    virtual void enableHeartbeat(uint32_t pingInterval, uint32_t pongTimeout, uint8_t disconnectTimeoutCount);
+    virtual void disableHeartbeat();
 
-    bool isConnected(void);
+    virtual bool isConnected(void);
 
-  protected:
+  public:
     String _host;
     uint16_t _port;
 
@@ -132,22 +140,22 @@ class WebSocketsClient : protected WebSockets {
     unsigned long _reconnectInterval;
     unsigned long _lastHeaderSent;
 
-    void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin);
+    virtual void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin);
 
-    void clientDisconnect(WSclient_t * client);
-    bool clientIsConnected(WSclient_t * client);
+    virtual void clientDisconnect(WSclient_t * client);
+    virtual bool clientIsConnected(WSclient_t * client);
 
 #if(WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC)
-    void handleClientData(void);
+    virtual void handleClientData(void);
 #endif
 
-    void sendHeader(WSclient_t * client);
-    void handleHeader(WSclient_t * client, String * headerLine);
+    virtual void sendHeader(WSclient_t * client);
+    virtual void handleHeader(WSclient_t * client, String * headerLine);
 
-    void connectedCb();
-    void connectFailedCb();
+    virtual void connectedCb();
+    virtual void connectFailedCb();
 
-    void handleHBPing();    // send ping in specified intervals
+    virtual void handleHBPing();    // send ping in specified intervals
 
 #if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC)
     void asyncConnect();

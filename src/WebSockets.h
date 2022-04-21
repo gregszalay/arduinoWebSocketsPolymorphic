@@ -22,6 +22,8 @@
  *
  */
 
+#pragma once
+
 #ifndef WEBSOCKETS_H_
 #define WEBSOCKETS_H_
 
@@ -33,6 +35,8 @@
 #include <IPAddress.h>
 #endif
 
+//#include <mtconfig.h>
+
 #ifdef ARDUINO_ARCH_AVR
 #error Version 2.x.x currently does not support Arduino with AVR since there is no support for std namespace of c++.
 #error Use Version 1.x.x. (ATmega branch)
@@ -41,6 +45,8 @@
 #endif
 
 #include "WebSocketsVersion.h"
+
+#define DEBUG_ESP_PORT Serial
 
 #ifndef NODEBUG_WEBSOCKETS
 #ifdef DEBUG_ESP_PORT
@@ -96,12 +102,18 @@
 
 #define WEBSOCKETS_TCP_TIMEOUT (5000)
 
+
 #define NETWORK_ESP8266_ASYNC (0)
 #define NETWORK_ESP8266 (1)
 #define NETWORK_W5100 (2)
 #define NETWORK_ENC28J60 (3)
 #define NETWORK_ESP32 (4)
 #define NETWORK_ESP32_ETH (5)
+#define NETWORK_ESP32_SIM7600_GSM (6)
+
+#ifndef WEBSOCKETS_NETWORK_TYPE
+#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP32
+#endif
 
 // max size of the WS Message Header
 #define WEBSOCKETS_MAX_HEADER_SIZE (14)
@@ -114,7 +126,7 @@
 //#define WEBSOCKETS_NETWORK_TYPE NETWORK_W5100
 
 #elif defined(ESP32)
-#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP32
+//#define WEBSOCKETS_NETWORK_TYPE /*NETWORK_ESP32*/ NETWORK_ESP32_SIM7600_GSM
 //#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP32_ETH
 #else
 #define WEBSOCKETS_NETWORK_TYPE NETWORK_W5100
@@ -141,10 +153,11 @@
 #error "network type ESP8266 ASYNC only possible on the ESP mcu!"
 #endif
 
+/*
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncTCPbuffer.h>
 #define WEBSOCKETS_NETWORK_CLASS AsyncTCPbuffer
-#define WEBSOCKETS_NETWORK_SERVER_CLASS AsyncServer
+#define WEBSOCKETS_NETWORK_SERVER_CLASS AsyncServer */
 
 #elif(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
 
@@ -172,10 +185,14 @@
 #define WEBSOCKETS_NETWORK_CLASS TCPClient
 #define WEBSOCKETS_NETWORK_SERVER_CLASS TCPServer
 #else
-#include <Ethernet.h>
+#include "Ethernet.h"
 #include <SPI.h>
-#define WEBSOCKETS_NETWORK_CLASS EthernetClient
-#define WEBSOCKETS_NETWORK_SERVER_CLASS EthernetServer
+#include "TinyGsmClient.h"
+#include "TinyGsmClientSIM7600.h"
+typedef TinyGsmSim7600 TinyGsm;
+typedef TinyGsmSim7600::GsmClientSim7600 TinyGsmClient;
+#define WEBSOCKETS_NETWORK_CLASS TinyGsmClient
+#define WEBSOCKETS_NETWORK_SERVER_CLASS TinyGsmClient
 #endif
 
 #elif(WEBSOCKETS_NETWORK_TYPE == NETWORK_ENC28J60)
@@ -190,7 +207,7 @@
 #include <WiFiClientSecure.h>
 #define SSL_AXTLS
 #define WEBSOCKETS_NETWORK_CLASS WiFiClient
-#define WEBSOCKETS_NETWORK_SSL_CLASS WiFiClientSecure
+//#define WEBSOCKETS_NETWORK_SSL_CLASS WiFiClientSecure
 #define WEBSOCKETS_NETWORK_SERVER_CLASS WiFiServer
 
 #elif(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32_ETH)
@@ -198,6 +215,30 @@
 #include <ETH.h>
 #define WEBSOCKETS_NETWORK_CLASS WiFiClient
 #define WEBSOCKETS_NETWORK_SERVER_CLASS WiFiServer
+
+#elif(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32_SIM7600_GSM)
+
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#define SSL_AXTLS
+#define WEBSOCKETS_NETWORK_CLASS WiFiClient
+//#define WEBSOCKETS_NETWORK_SSL_CLASS WiFiClientSecure
+#define WEBSOCKETS_NETWORK_SERVER_CLASS WiFiServer
+
+#include "TinyGsmClient.h"
+#include "TinyGsmClientSIM7600.h"
+/*
+typedef TinyGsmSim7600 TinyGsm;
+typedef TinyGsmSim7600::GsmClientSim7600 TinyGsmClient;
+#define TINY_GSM_MODEM_SIM7600
+#define WEBSOCKETS_NETWORK_CLASS TinyGsmClient
+ */
+// TODO
+//#define WEBSOCKETS_NETWORK_SSL_CLASS WiFiClientSecure
+
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#define WEBSOCKETS_NETWORK_SERVER_CLASS TinyGsmClient
 
 #else
 #error "no network type selected!"
@@ -260,7 +301,8 @@ typedef struct {
     uint8_t * maskKey;
 } WSMessageHeader_t;
 
-typedef struct {
+/*typedef*/ class WSclient_t {
+  public:
     void init(uint8_t num,
         uint32_t pingInterval,
         uint32_t pongTimeout,
@@ -271,11 +313,12 @@ typedef struct {
         this->disconnectTimeoutCount = disconnectTimeoutCount;
     }
 
+  public:
     uint8_t num = 0;    ///< connection number
 
     WSclientsStatus_t status = WSC_NOT_CONNECTED;
 
-    WEBSOCKETS_NETWORK_CLASS * tcp = nullptr;
+    Client * tcp = nullptr;
 
     bool isSocketIO = false;    ///< client for socket.io server
 
@@ -321,10 +364,231 @@ typedef struct {
     String cHttpLine;    ///< HTTP header lines
 #endif
 
-} WSclient_t;
+  public:
+    virtual uint8_t getNum() {
+        return this->num;
+    }    ///< connection number
+
+    virtual void setNum(uint8_t num) {
+        this->num = num;
+    }    ///< connection number
+
+    virtual WSclientsStatus_t getStatus() {
+        return this->status;
+    }
+
+    virtual void setStatus(WSclientsStatus_t status) {
+        this->status = status;
+    }
+
+    virtual Client * getTcp() {
+        return this->tcp;
+    }
+
+    virtual void setTcp(Client * tcp) {
+        this->tcp = tcp;
+    }
+
+    virtual bool getIsSocketIO() {
+        return this->isSocketIO;
+    }    ///< client for socket.io server
+
+    virtual void setIsSocketIO(bool socketIO) {
+        this->isSocketIO = socketIO;
+    }    ///< client for socket.io server
+
+    virtual String getCUrl() {
+        return this->cUrl;
+    }    ///< http url
+    virtual void setCUrl(String cUrl) {
+        this->cUrl = cUrl;
+    }    ///< http url
+
+    virtual uint16_t getCCode() {
+        return this->cCode;
+    }    ///< http code
+    virtual void setCCode(uint16_t cCode) {
+        this->cCode = cCode;
+    }    ///< http code
+
+    virtual bool getCIsClient() {
+        return this->cIsClient;
+    }    ///< will be used for masking
+
+    virtual void setCIsClient(bool cIsClient) {
+        this->cIsClient = cIsClient;
+    }    ///< will be used for masking
+
+    virtual bool getCIsUpgrade() {
+        return this->cIsUpgrade;
+    }    ///< Connection == Upgrade
+    virtual void setCIsUpgrade(bool cIsUpgrade) {
+        this->cIsUpgrade = cIsUpgrade;
+    }    ///< Connection == Upgrade
+
+    virtual bool getCIsWebsocket() {
+        return this->cIsWebsocket;
+    }    ///< Upgrade == websocket
+    virtual void setCIsWebsocket(bool cIsWebsocket) {
+        this->cIsWebsocket = cIsWebsocket;
+    }    ///< Upgrade == websocket
+
+    virtual String getCSessionId() {
+        return this->cSessionId;
+    }
+    virtual void setCSessionId(String cSessionId) {
+        this->cSessionId = cSessionId;
+    }
+
+    virtual String & getCKey() {
+        return this->cKey;
+    }
+    virtual void setCKey(String cKey) {
+        this->cKey = cKey;
+    }
+
+    virtual String getCAccept() {
+        return this->cAccept;
+    }
+    virtual void setCAccept(String cAccept) {
+        this->cAccept = cAccept;
+    }
+
+    virtual String getCProtocol() {
+        return this->cProtocol;
+    }
+    virtual void setCProtocol(String cProtocol) {
+        this->cProtocol = cProtocol;
+    }
+
+    virtual String getCExtensions() {
+        return this->cExtensions;
+    }
+    virtual void setCExtensions(String cExtensions) {
+        this->cExtensions = cExtensions;
+    }
+
+    virtual uint16_t getCVersion() {
+        return this->cVersion;
+    }
+    virtual void setCVersion(uint16_t cVersion) {
+        this->cVersion = cVersion;
+    }
+
+    virtual uint8_t getCWsRXsize() {
+        return this->cWsRXsize;
+    }
+    virtual void setCWsRXsize(uint8_t cWsRXsize) {
+        this->cWsRXsize = cWsRXsize;
+    }
+
+    virtual uint8_t * getCWsHeader() {
+        return this->cWsHeader;
+    }
+
+    // uint8_t cWsHeader[WEBSOCKETS_MAX_HEADER_SIZE];
+    virtual void setCWsHeader(uint8_t * cWsHeader) {
+        // this->cWsHeader = cWsHeader;
+        for(int i = 0; i < WEBSOCKETS_MAX_HEADER_SIZE; i++) {
+            this->cWsHeader[i] = cWsHeader[i];
+        }
+    }
+
+    virtual WSMessageHeader_t * getCWsHeaderDecode() {
+        return &(this->cWsHeaderDecode);
+    }
+    virtual void setCWsHeaderDecode(WSMessageHeader_t cWsHeaderDecode) {
+        this->cWsHeaderDecode = cWsHeaderDecode;
+    }
+
+    virtual String getBase64Authorization() {
+        return this->base64Authorization;
+    }
+    virtual void setBase64Authorization(String base64Authorization) {
+        this->base64Authorization = base64Authorization;
+    }
+
+    virtual String getPlainAuthorization() {
+        return this->plainAuthorization;
+    }
+    virtual void setPlainAuthorization(String plainAuthorization) {
+        this->plainAuthorization = plainAuthorization;
+    }
+
+    virtual String getExtraHeaders() {
+        return this->extraHeaders;
+    }
+    virtual void setExtraHeaders(String extraHeaders) {
+        this->extraHeaders = extraHeaders;
+    }
+
+    virtual bool getCHttpHeadersValid() {
+        return this->cHttpHeadersValid;
+    }
+    virtual void setCHttpHeadersValid(bool cHttpHeadersValid) {
+        this->cHttpHeadersValid = cHttpHeadersValid;
+    }
+
+    virtual size_t getCMandatoryHeadersCount() {
+        return this->cMandatoryHeadersCount;
+    }
+    virtual void setCMandatoryHeadersCount(size_t cMandatoryHeadersCount) {
+        this->cMandatoryHeadersCount = cMandatoryHeadersCount;
+    }
+
+    virtual bool getPongReceived() {
+        return this->pongReceived;
+    }
+    virtual void setPongReceived(bool pongReceived) {
+        this->pongReceived = pongReceived;
+    }
+
+    virtual uint32_t getPingInterval() {
+        return this->pingInterval;
+    }
+    virtual void setPingInterval(uint32_t pingInterval) {
+        this->pingInterval = pingInterval;
+    }
+
+    virtual uint32_t getLastPing() {
+        return this->lastPing;
+    }
+    virtual void setLastPing(uint32_t lastPing) {
+        this->lastPing = lastPing;
+    }
+
+    virtual uint32_t getPongTimeout() {
+        return this->lastPing;
+    }
+    virtual void setPongTimeout(uint32_t pongTimeout) {
+        this->pongTimeout = pongTimeout;
+    }
+
+    virtual uint8_t getDisconnectTimeoutCount() {
+        return this->disconnectTimeoutCount;
+    }
+    virtual void setDisconnectTimeoutCount(uint8_t disconnectTimeoutCount) {
+        this->disconnectTimeoutCount = disconnectTimeoutCount;
+    }
+    virtual uint8_t getPongTimeoutCount() {
+        return this->pongTimeoutCount;
+    }
+    virtual void setPongTimeoutCount(uint8_t pongTimeoutCount) {
+        this->pongTimeoutCount = pongTimeoutCount;
+    }
+
+#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC)
+    virtual String getCHttpLine() {
+        return this->cHttpLine;
+    }
+    virtual void setCHttpLine(String cHttpLine) {
+        this->cHttpLine = cHttpLine;
+    }
+#endif
+};
 
 class WebSockets {
-  protected:
+  public:
 #ifdef __AVR__
     typedef void (*WSreadWaitCb)(WSclient_t * client, bool ok);
 #else

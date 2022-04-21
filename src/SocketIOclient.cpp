@@ -67,7 +67,7 @@ void SocketIOclient::configureEIOping(bool disableHeartbeat) {
 }
 
 void SocketIOclient::initClient(void) {
-    if(_client.cUrl.indexOf("EIO=4") != -1) {
+    if(_client.getCUrl().indexOf("EIO=4") != -1) {
         DEBUG_WEBSOCKETS("[wsIOc] found EIO=4 disable EIO ping on client\n");
         configureEIOping(true);
     }
@@ -85,14 +85,6 @@ bool SocketIOclient::isConnected(void) {
     return WebSocketsClient::isConnected();
 }
 
-void SocketIOclient::setExtraHeaders(const char * extraHeaders) {
-    return WebSocketsClient::setExtraHeaders(extraHeaders);
-}
-
-void SocketIOclient::setReconnectInterval(unsigned long time) {
-    return WebSocketsClient::setReconnectInterval(time);
-}
-
 /**
  * send text data to client
  * @param num uint8_t client id
@@ -107,7 +99,7 @@ bool SocketIOclient::send(socketIOmessageType_t type, uint8_t * payload, size_t 
     if(length == 0) {
         length = strlen((const char *)payload);
     }
-    if(clientIsConnected(&_client) && _client.status == WSC_CONNECTED) {
+    if(clientIsConnected(&_client) && _client.getStatus() == WSC_CONNECTED) {
         if(!headerToPayload) {
             // webSocket Header
             ret = WebSocketsClient::sendFrameHeader(&_client, WSop_text, length + 2, true);
