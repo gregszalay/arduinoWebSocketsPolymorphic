@@ -35,6 +35,13 @@ WebSocketsClient::WebSocketsClient() {
     _host                = "";
 }
 
+
+WebSocketsClient::WebSocketsClient(ArduinoClientFactory* clientFactory) {
+    WebSocketsClient();
+    this->clientFactory = clientFactory;
+   
+}
+
 WebSocketsClient::~WebSocketsClient() {
     disconnect();
 }
@@ -160,9 +167,15 @@ void WebSocketsClient::beginSocketIO(String host, uint16_t port, String url, Str
 #if defined(HAS_SSL)
 void WebSocketsClient::beginSocketIOSSL(const char * host, uint16_t port, const char * url, const char * protocol) {
     begin(host, port, url, protocol);
+<<<<<<< Updated upstream
     _client.isSocketIO = true;
     _client.isSSL      = true;
     _fingerprint       = SSL_FINGERPRINT_NULL;
+=======
+    _client.setIsSocketIO(true);
+    _client.isSSL = true;
+    _fingerprint  = SSL_FINGERPRINT_NULL;
+>>>>>>> Stashed changes
 }
 
 void WebSocketsClient::beginSocketIOSSL(String host, uint16_t port, String url, String protocol) {
@@ -172,18 +185,31 @@ void WebSocketsClient::beginSocketIOSSL(String host, uint16_t port, String url, 
 #if defined(SSL_BARESSL)
 void WebSocketsClient::beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url, BearSSL::X509List * CA_cert, const char * protocol) {
     begin(host, port, url, protocol);
+<<<<<<< Updated upstream
     _client.isSocketIO = true;
     _client.isSSL      = true;
     _fingerprint       = SSL_FINGERPRINT_NULL;
     _CA_cert           = CA_cert;
+=======
+    _client.setIsSocketIO(true);
+    _client.isSSL = true;
+    _fingerprint  = SSL_FINGERPRINT_NULL;
+    _CA_cert      = CA_cert;
+>>>>>>> Stashed changes
 }
 #endif
 
 void WebSocketsClient::beginSocketIOSSLWithCA(const char * host, uint16_t port, const char * url, const char * CA_cert, const char * protocol) {
     begin(host, port, url, protocol);
+<<<<<<< Updated upstream
     _client.isSocketIO = true;
     _client.isSSL      = true;
     _fingerprint       = SSL_FINGERPRINT_NULL;
+=======
+    _client.getIsSocketIO(true);
+    _client.isSSL = true;
+    _fingerprint  = SSL_FINGERPRINT_NULL;
+>>>>>>> Stashed changes
 #if defined(SSL_BARESSL)
     _CA_cert = new BearSSL::X509List(CA_cert);
 #else
@@ -482,7 +508,11 @@ void WebSocketsClient::clientDisconnect(WSclient_t * client) {
         event = true;
         delete client->ssl;
         client->ssl = NULL;
+<<<<<<< Updated upstream
         client->tcp = NULL;
+=======
+        client->setTcp(NULL);
+>>>>>>> Stashed changes
     }
 #endif
 
@@ -690,10 +720,17 @@ void WebSocketsClient::handleHeader(WSclient_t * client, String * headerLine) {
         DEBUG_WEBSOCKETS("[WS-Client][handleHeader] socket.io json: %s\n", headerLine->c_str());
         String sid_begin = WEBSOCKETS_STRING("\"sid\":\"");
         if(headerLine->indexOf(sid_begin) > -1) {
+<<<<<<< Updated upstream
             int start          = headerLine->indexOf(sid_begin) + sid_begin.length();
             int end            = headerLine->indexOf('"', start);
             client->cSessionId = headerLine->substring(start, end);
             DEBUG_WEBSOCKETS("[WS-Client][handleHeader]  - cSessionId: %s\n", client->cSessionId.c_str());
+=======
+            int start = headerLine->indexOf(sid_begin) + sid_begin.length();
+            int end   = headerLine->indexOf('"', start);
+            client->setCSessionId(headerLine->substring(start, end));
+            DEBUG_WEBSOCKETS("[WS-Client][handleHeader]  - cSessionId: %s\n", client->getCSessionId().c_str());
+>>>>>>> Stashed changes
 
             // Trigger websocket connection code path
             *headerLine = "";
@@ -773,24 +810,40 @@ void WebSocketsClient::handleHeader(WSclient_t * client, String * headerLine) {
             client->status = WSC_HEADER;
         }
 
+<<<<<<< Updated upstream
         bool ok = (client->cIsUpgrade && client->cIsWebsocket);
+=======
+        bool ok = (client->getCIsUpgrade() && client->getCIsWebsocket());
+>>>>>>> Stashed changes
 
         if(ok) {
             switch(client->cCode) {
                 case 101:    ///< Switching Protocols
+<<<<<<< Updated upstream
 
                     break;
                 case 200:
                     if(client->isSocketIO) {
+=======
+                    break;
+                case 200:
+                    if(client->getIsSocketIO()) {
+>>>>>>> Stashed changes
                         break;
                     }
                     // falls through
                 case 403:    ///< Forbidden
                              // todo handle login
+<<<<<<< Updated upstream
                              // falls through
                 default:     ///< Server dont unterstand requrst
                     ok = false;
                     DEBUG_WEBSOCKETS("[WS-Client][handleHeader] serverCode is not 101 (%d)\n", client->cCode);
+=======
+                default:    ///< Server dont unterstand requrst
+                    ok = false;
+                    DEBUG_WEBSOCKETS("[WS-Client][handleHeader] serverCode is not 101 (%d)\n", client->getCCode());
+>>>>>>> Stashed changes
                     clientDisconnect(client);
                     _lastConnectionFail = millis();
                     break;
@@ -798,7 +851,11 @@ void WebSocketsClient::handleHeader(WSclient_t * client, String * headerLine) {
         }
 
         if(ok) {
+<<<<<<< Updated upstream
             if(client->cAccept.length() == 0) {
+=======
+            if(client->getCAccept().length() == 0) {
+>>>>>>> Stashed changes
                 ok = false;
             } else {
                 // generate Sec-WebSocket-Accept key for check
@@ -864,8 +921,13 @@ void WebSocketsClient::connectedCb() {
     _client.tcp->setTimeout(WEBSOCKETS_TCP_TIMEOUT);
 #endif
 
+<<<<<<< Updated upstream
 #if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266) || (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32)
     _client.tcp->setNoDelay(true);
+=======
+#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)    //|| (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32)
+    _client.getTcp()->setNoDelay(true);
+>>>>>>> Stashed changes
 #endif
 
 #if defined(HAS_SSL)

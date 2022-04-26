@@ -26,9 +26,11 @@
 #define WEBSOCKETSCLIENT_H_
 
 #include "WebSockets.h"
+#include "CustomWebSocketClients/ArduinoClientFactory.h"
 
 class WebSocketsClient : protected WebSockets {
   public:
+    ArduinoClientFactory * clientFactory = nullptr;
 #ifdef __AVR__
     typedef void (*WebSocketClientEvent)(WStype_t type, uint8_t * payload, size_t length);
 #else
@@ -36,6 +38,7 @@ class WebSocketsClient : protected WebSockets {
 #endif
 
     WebSocketsClient(void);
+    WebSocketsClient(ArduinoClientFactory* clientFactory);
     virtual ~WebSocketsClient(void);
 
     void begin(const char * host, uint16_t port, const char * url = "/", const char * protocol = "arduino");

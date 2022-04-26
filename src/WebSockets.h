@@ -42,16 +42,39 @@
 
 #include "WebSocketsVersion.h"
 
+<<<<<<< Updated upstream
+=======
+#ifndef DEBUG_ESP_PORT
+#define DEBUG_ESP_PORT Serial
+#endif
+
+#include <string.h>
+
+#define __FILENAME_LINUX__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define __FILENAME_LINUX_WIN__ (strrchr(__FILENAME_LINUX__, '\\') ? strrchr(__FILENAME_LINUX__, '\\') + 1 : __FILENAME_LINUX__)
+
+>>>>>>> Stashed changes
 #ifndef NODEBUG_WEBSOCKETS
 #ifdef DEBUG_ESP_PORT
-#define DEBUG_WEBSOCKETS(...)               \
-    {                                       \
-        DEBUG_ESP_PORT.printf(__VA_ARGS__); \
-        DEBUG_ESP_PORT.flush();             \
+#define DEBUG_WEBSOCKETS(...)                         \
+    {                                                 \
+        DEBUG_ESP_PORT.print("[");                    \
+        DEBUG_ESP_PORT.print(__FILENAME_LINUX_WIN__); \
+        DEBUG_ESP_PORT.print(":");                    \
+        DEBUG_ESP_PORT.print(__LINE__);               \
+        DEBUG_ESP_PORT.print("] ");                    \
+        DEBUG_ESP_PORT.printf(__VA_ARGS__);           \
+        DEBUG_ESP_PORT.println("");                   \
+        DEBUG_ESP_PORT.flush();                       \
     }
 #else
-//#define DEBUG_WEBSOCKETS(...) os_printf( __VA_ARGS__ )
+#define DEBUG_WEBSOCKETS(...) Serial.print(__VA_ARGS__)
+#define DEBUG_WEBSOCKETS(...) Serial.println(__VA_ARGS__)
 #endif
+#else
+#define DEBUG_WEBSOCKETS(...) \
+    {                         \
+    }
 #endif
 
 #ifndef DEBUG_WEBSOCKETS
@@ -102,6 +125,16 @@
 #define NETWORK_ENC28J60 (3)
 #define NETWORK_ESP32 (4)
 #define NETWORK_ESP32_ETH (5)
+<<<<<<< Updated upstream
+=======
+#define NETWORK_ESP32_SIM7600_GSM (6)
+
+#ifndef WEBSOCKETS_NETWORK_TYPE
+#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP32
+//#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP32_SIM7600_GSM
+//#define WEBSOCKETS_NETWORK_TYPE NETWORK_W5100
+#endif
+>>>>>>> Stashed changes
 
 // max size of the WS Message Header
 #define WEBSOCKETS_MAX_HEADER_SIZE (14)
